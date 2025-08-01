@@ -15,7 +15,7 @@ const { title, description } = Astro.props;
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="generator" content={Astro.generator} />
-		<title>{title || 'TabTab'}</title>
+		<title>{title || '王子肥波'}</title>
 		{description && <meta name="description" content={description} />}
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 	</head>
@@ -23,7 +23,7 @@ const { title, description } = Astro.props;
 		<div class="min-h-full">
 			<!-- 简洁导航栏 -->
 			<header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-				<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
 					<div class="flex justify-between items-center h-14 md:px-4">
 						<!-- Logo -->
 						<a href="/" class="text-xl font-semibold text-gray-900 dark:text-gray-100">
@@ -110,13 +110,13 @@ const { title, description } = Astro.props;
 			</header>
 
 			<!-- 主要内容 -->
-			<main class="max-w-7xl mx-auto pt-8 pb-6 px-6 sm:px-8 lg:px-10">
+			<main class="max-w-7xl mx-auto pt-8 pb-6 px-0 sm:px-4 lg:px-6">
 				<slot />
 			</main>
 
 			<!-- 精简页脚 -->
 			<footer class="border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 eye-care:bg-[var(--eye-care-bg)]">
-				<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+				<div class="max-w-7xl mx-auto py-8 px-0 sm:px-4 lg:px-6">
 					<div class="text-center">
 						<div class="flex justify-center space-x-6 mb-4">
 							<a href="/" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">首页</a>
