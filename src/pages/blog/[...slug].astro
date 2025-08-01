@@ -74,32 +74,50 @@ const readingTime = Math.ceil(post.body.split(' ').length / 200);
   <header class="mb-6">
     <!-- Hero Image 背景区域 -->
     {post.data.heroImage && (
-      <div class="relative w-full h-72 md:h-96 lg:h-[500px] rounded-2xl overflow-hidden mb-8">
-        <div class="hero-image-container relative w-full h-full">
+      <div class="relative w-full h-56 sm:h-72 md:h-96 lg:h-[500px] rounded-2xl overflow-hidden mb-8">
+        <div class="hero-image-container relative w-full h-full bg-gray-200 dark:bg-gray-800">
           {Array.isArray(post.data.heroImage) ? (
             <!-- 多张图片时只取第一张 -->
-            <div 
-              class="absolute inset-0 w-full h-full bg-cover bg-center"
-              style={`background-image: url('${post.data.heroImage[0]}')`}
-            >
-              <!-- 更强的灰色蒙版，解决浅色图片突兀问题 -->
-              <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/70 to-black/70"></div>
+            <div class="absolute inset-0 w-full h-full">
+              <img 
+                src={post.data.heroImage[0]} 
+                alt="" 
+                class="absolute inset-0 w-full h-full object-cover"
+                loading="lazy"
+              />
+              <div 
+                class="absolute inset-0 w-full h-full bg-cover bg-center"
+                style={`background-image: url("${post.data.heroImage[0]}")`}
+                aria-hidden="true"
+              >
+                <!-- 更强的灰色蒙版，解决浅色图片突兀问题 -->
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/70 to-black/70"></div>
+              </div>
             </div>
           ) : (
             <!-- 单张图片 -->
-            <div 
-              class="absolute inset-0 w-full h-full bg-cover bg-center"
-              style={`background-image: url('${post.data.heroImage}')`}
-            >
-              <!-- 更强的灰色蒙版，解决浅色图片突兀问题 -->
-              <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/70 to-black/70"></div>
+            <div class="absolute inset-0 w-full h-full">
+              <img 
+                src={post.data.heroImage} 
+                alt="" 
+                class="absolute inset-0 w-full h-full object-cover"
+                loading="lazy"
+              />
+              <div 
+                class="absolute inset-0 w-full h-full bg-cover bg-center"
+                style={`background-image: url("${post.data.heroImage}")`}
+                aria-hidden="true"
+              >
+                <!-- 更强的灰色蒙版，解决浅色图片突兀问题 -->
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/70 to-black/70"></div>
+              </div>
             </div>
           )}
         </div>
         
         <!-- 标题和内容覆盖层 -->
-        <div class="absolute inset-0 flex items-center justify-center px-4 py-8">
-          <div class="text-center text-white max-w-4xl">
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+          <div class="text-center text-white">
             {post.data.category && (
               <a href={`/blog/category/${post.data.category.toLowerCase()}`} 
                  class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-all duration-200 mb-6">
@@ -109,11 +127,11 @@ const readingTime = Math.ceil(post.body.split(' ').length / 200);
                 {post.data.category}
               </a>
             )}
-            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight mb-6">
+            <h1 class="sm:text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight mb-6">
               {post.data.title}
             </h1>
             {post.data.description && (
-              <p class="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed">
+              <p class="text sm:text-sm md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed">
                 {post.data.description}
               </p>
             )}
@@ -138,7 +156,7 @@ const readingTime = Math.ceil(post.body.split(' ').length / 200);
         </div>
         
         <div class="relative">
-          <h1 class="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100 leading-tight">
+          <h1 class="text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100 leading-tight">
             {post.data.title}
           </h1>
         </div>
