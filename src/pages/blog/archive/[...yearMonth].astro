@@ -1,0 +1,219 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+// 预生成所有归档页面
+export async function getStaticPaths() {
+  const allPosts = await getCollection('blog');
+  const publishedPosts = allPosts.filter(post => !post.data.draft);
+  
+  // 构建归档数据
+  const archiveData = publishedPosts.reduce((acc, post) => {
+    const year = post.data.pubDate.getFullYear();
+    const month = String(post.data.pubDate.getMonth() + 1).padStart(2, '0');
+    const key = `${year}-${month}`;
+    
+    if (!acc[key]) {
+      acc[key] = [];
+    }
+    acc[key].push(post);
+    
+    return acc;
+  }, {} as Record<string, typeof publishedPosts>);
+  
+  return Object.keys(archiveData).map(yearMonth => ({
+    params: { yearMonth },
+    props: { yearMonth }
+  }));
+}
+
+// 获取年月参数
+const { yearMonth } = Astro.params;
+
+// 获取所有博客文章
+const allPosts = await getCollection('blog');
+
+// 过滤掉草稿文章
+const publishedPosts = allPosts.filter(post => !post.data.draft);
+
+// 解析年月
+const [year, month] = (yearMonth as string).split('-');
+const targetYear = parseInt(year);
+const targetMonth = parseInt(month);
+
+// 过滤指定年月的文章
+const archivePosts = publishedPosts.filter(post => {
+  const postYear = post.data.pubDate.getFullYear();
+  const postMonth = post.data.pubDate.getMonth() + 1;
+  return postYear === targetYear && postMonth === targetMonth;
+});
+
+// 按发布日期排序
+const sortedPosts = archivePosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+// 构建归档数据
+const archiveData = publishedPosts.reduce((acc, post) => {
+  const year = post.data.pubDate.getFullYear();
+  const month = String(post.data.pubDate.getMonth() + 1).padStart(2, '0');
+  const key = `${year}-${month}`;
+  
+  if (!acc[key]) {
+    acc[key] = [];
+  }
+  acc[key].push(post);
+  
+  return acc;
+}, {} as Record<string, typeof publishedPosts>);
+
+// 格式化显示的年月
+const monthNames = [
+  '一月', '二月', '三月', '四月', '五月', '六月',
+  '七月', '八月', '九月', '十月', '十一月', '十二月'
+];
+const displayMonth = monthNames[targetMonth - 1];
+
+// 页面标题
+const pageTitle = `${targetYear}年${displayMonth}归档 - TabTab`;
+---
+
+<Layout title={pageTitle}>
+  <div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- 页面标题区域 -->
+    <div class="mb-8">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-100 dark:border-gray-700">
+        <nav class="flex items-center space-x-2 text-sm mb-4">
+          <a href="/blog" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
+            博客首页
+          </a>
+          <span class="text-gray-400">/</span>
+          <span class="text-gray-600 dark:text-gray-400">归档</span>
+          <span class="text-gray-400">/</span>
+          <span class="text-gray-900 dark:text-white font-medium">{targetYear}年{displayMonth}</span>
+        </nav>
+        
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+          {targetYear}年{displayMonth}
+        </h1>
+        <p class="text-gray-600 dark:text-gray-300">
+          共 {sortedPosts.length} 篇文章
+        </p>
+      </div>
+    </div>
+
+    <!-- Bento网格布局 -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      <!-- 侧边栏 -->
+      <aside class="lg:col-span-1">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 p-4 sticky top-4">
+          <h3 class="font-semibold text-gray-900 dark:text-white mb-3">归档月份</h3>
+          <div class="space-y-2">
+            {Object.entries(archiveData)
+              .sort(([a], [b]) => b.localeCompare(a))
+              .slice(0, 12)
+              .map(([month, posts]) => (
+                <a 
+                  href={`/blog/archive/${month}`}
+                  class={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                    month === yearMonth
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <span>{month}</span>
+                  <span class="text-xs">{posts.length}</span>
+                </a>
+              ))}
+          </div>
+        </div>
+      </aside>
+
+      <!-- 文章列表区域 -->
+      <main class="lg:col-span-3">
+        {sortedPosts.length > 0 ? (
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {sortedPosts.map((post, index) => (
+              <article 
+                class={`bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 group ${
+                  index % 7 === 0 ? 'md:col-span-2' : ''
+                }`}
+              >
+                {post.data.heroImage && (
+                  <div class={`relative overflow-hidden ${index % 7 === 0 ? 'h-64' : 'h-48'}`}>
+                    <img 
+                      src={post.data.heroImage} 
+                      alt={post.data.title}
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </div>
+                )}
+                
+                <div class="p-4">
+                  <div class="flex items-center gap-2 mb-2">
+                    {post.data.category && (
+                      <a 
+                        href={`/blog/category/${post.data.category}`}
+                        class="text-xs font-medium px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                      >
+                        {post.data.category}
+                      </a>
+                    )}
+                    <time class="text-xs text-gray-500 dark:text-gray-400">
+                      {post.data.pubDate.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}
+                    </time>
+                  </div>
+                  
+                  <h3 class={`font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors ${
+                    index % 7 === 0 ? 'text-lg mb-2' : 'text-base mb-1'
+                  }`}>
+                    <a href={`/blog/${post.slug}`}>
+                      {post.data.title}
+                    </a>
+                  </h3>
+                  
+                  <p class="text-gray-600 dark:text-gray-300 text-sm line-clamp-2">
+                    {post.data.description}
+                  </p>
+                  
+                  {post.data.tags && post.data.tags.length > 0 && (
+                    <div class="flex flex-wrap gap-1 mt-3">
+                      {post.data.tags.slice(0, 2).map(tag => (
+                        <a 
+                          href={`/blog/tag/${tag}`}
+                          class="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        >
+                          #{tag}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 p-12 text-center">
+            <div class="text-gray-500 dark:text-gray-400">
+              <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <h3 class="text-lg font-medium mb-2">暂无文章</h3>
+              <p class="text-sm">
+                该归档月份下还没有文章
+              </p>
+            </div>
+            
+            <div class="mt-6">
+              <a 
+                href="/blog"
+                class="inline-flex items-center px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg font-medium hover:bg-gray-700 dark:hover:bg-gray-100 transition-colors"
+              >
+                返回博客首页
+              </a>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  </div>
+</Layout>

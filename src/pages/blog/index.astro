@@ -1,0 +1,189 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import BlogPostCard from '../../components/BlogPostCard.astro';
+import { getCollection } from 'astro:content';
+
+const posts = await getCollection('blog');
+const publishedPosts = posts
+  .filter(post => !post.data.draft)
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+// 获取所有标签和分类
+const allTags = [...new Set(publishedPosts.flatMap(post => post.data.tags || []))].sort();
+const allCategories = [...new Set(publishedPosts.map(post => post.data.category).filter(Boolean))].sort();
+
+// 按年月分组（使用所有文章）
+const postsByYearMonth = publishedPosts.reduce((acc, post) => {
+  const year = post.data.pubDate.getFullYear();
+  const month = String(post.data.pubDate.getMonth() + 1).padStart(2, '0');
+  const key = `${year}-${month}`;
+  
+  if (!acc[key]) {
+    acc[key] = [];
+  }
+  acc[key].push(post);
+  return acc;
+}, {} as Record<string, typeof publishedPosts>);
+
+const yearMonths = Object.keys(postsByYearMonth).sort().reverse();
+---
+
+<Layout>
+  <div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- 页面标题 -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">博客文章</h1>
+      <p class="text-gray-600 dark:text-gray-400">共 {publishedPosts.length} 篇文章</p>
+    </div>
+
+    <!-- 分类筛选 -->
+    <div class="mb-6 flex flex-wrap gap-4 items-center">
+      <div class="flex gap-2 text-sm">
+        <a href="/blog" class="text-blue-600 dark:text-blue-400 hover:underline">全部</a>
+        {allCategories.slice(0, 3).map(category => (
+          <a href={`/blog/category/${category}`} class="text-gray-600 dark:text-gray-400 hover:underline">
+            {category}
+          </a>
+        ))}
+        {(allCategories.length > 3 || allTags.length > 0) && (
+          <>
+            <span class="text-gray-400">|</span>
+            <a href="/blog/categories" class="text-green-600 dark:text-green-400 hover:underline">所有分类</a>
+            <a href="/blog/tags" class="text-purple-600 dark:text-purple-400 hover:underline">所有标签</a>
+          </>
+        )}
+      </div>
+    </div>
+
+    <!-- 文章列表 -->
+    <div class="space-y-6">
+      {publishedPosts.map((post) => (
+        <BlogPostCard 
+          post={post} 
+          bentoStyle="simple"
+        />
+      ))}
+
+      {publishedPosts.length === 0 && (
+        <div class="text-center py-12">
+          <p class="text-gray-500 dark:text-gray-400">暂无文章</p>
+        </div>
+      )}
+    </div>
+
+    <!-- 分类和标签索引 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
+      <!-- 分类 -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition-all duration-300">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center">
+            <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+            </svg>
+            分类
+          </h3>
+          <a href="/blog/categories" class="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium flex items-center">
+            查看全部
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </a>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          {allCategories.slice(0, 6).map(category => (
+            <a 
+              href={`/blog/category/${category.toLowerCase()}`}
+              class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 px-3 py-2 rounded-md group"
+            >
+              <span class="truncate">{category}</span>
+              <span class="text-xs text-gray-400 dark:text-gray-500">
+                {publishedPosts.filter(p => p.data.category === category).length}
+              </span>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <!-- 标签 -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition-all duration-300">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center">
+            <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+            </svg>
+            标签
+          </h3>
+          <a href="/blog/tags" class="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium flex items-center">
+            查看全部
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </a>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          {allTags.slice(0, 12).map(tag => (
+            <a 
+              href={`/blog/tag/${tag.toLowerCase()}`}
+              class="inline-block text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900 hover:text-purple-700 dark:hover:text-purple-300 hover:scale-105 transition-all duration-200"
+              style={`font-size: ${Math.max(12, Math.min(16, 12 + publishedPosts.filter(p => p.data.tags?.includes(tag)).length))}px`}
+            >
+              #{tag}
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <!-- 文章归档 -->
+    {Object.entries(postsByYearMonth).length > 0 && (
+      <div class="mt-8">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">文章归档</h2>
+          <a href="/blog/archive" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+            查看全部归档 →
+          </a>
+        </div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+          {Object.entries(postsByYearMonth)
+            .sort(([a], [b]) => b.localeCompare(a))
+            .slice(0, 12)
+            .map(([yearMonth, posts]) => {
+              const [year, month] = yearMonth.split('-');
+              const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+              return (
+                <a 
+                  href={`/blog/archive/${yearMonth}`}
+                  class="group block p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md dark:hover:shadow-gray-900/50 hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-200"
+                >
+                  <div class="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    {monthNames[parseInt(month) - 1]}
+                  </div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                    {year}年
+                  </div>
+                  <div class="text-sm font-medium text-blue-600 dark:text-blue-400">
+                    {posts.length} 篇
+                  </div>
+                </a>
+              );
+            })}
+        </div>
+        
+        {Object.entries(postsByYearMonth).length > 12 && (
+          <div class="mt-6 text-center">
+            <a 
+              href="/blog/archive" 
+              class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              查看更多月份
+              <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+</Layout>

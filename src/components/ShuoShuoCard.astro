@@ -1,0 +1,83 @@
+---
+export interface Props {
+  post: any;
+}
+
+const { post } = Astro.props;
+const { data, render } = post;
+const { Content } = await render();
+
+// 日期格式化函数 - 显示相对时间
+function formatDate(date: Date): string {
+  // 使用已解析的北京时间计算相对时间
+  const now = new Date();
+  const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  
+  const diff = nowDate.getTime() - targetDate.getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  
+  if (days === 0) return '今天';
+  if (days === 1) return '昨天';
+  if (days < 7) return `${days}天前`;
+  if (days < 30) return `${Math.floor(days / 7)}周前`;
+  if (days < 365) return `${Math.floor(days / 30)}个月前`;
+  return `${Math.floor(days / 365)}年前`;
+}
+
+
+---
+
+<!-- 说说卡片 - 与博客风格统一 -->
+<article class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-700">
+  <!-- 头部信息 -->
+  <header class="flex items-start justify-between mb-4">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">
+        {data.author ? data.author.charAt(0) : '记'}
+      </div>
+      <div>
+          <div class="font-medium text-gray-900 dark:text-white">{data.author || ''}</div>
+          <div class="text-sm text-gray-500 dark:text-gray-400">
+            <time datetime={data.pubDate.toISOString()}>{formatDate(data.pubDate)}</time>
+          </div>
+        </div>
+    </div>
+  </header>
+
+  <!-- 标题 -->
+  {data.title && (
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3 leading-tight">
+      {data.title}
+    </h2>
+  )}
+
+  <!-- 内容 -->
+  <div class="prose prose-gray dark:prose-invert max-w-none mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">
+    <Content />
+  </div>
+
+  <!-- 图片网格 -->
+  {data.images && data.images.length > 0 && (
+    <div class={`grid gap-2 mb-4 ${
+      data.images.length === 1 ? 'grid-cols-1' : 
+      data.images.length === 2 ? 'grid-cols-2' : 
+      'grid-cols-3'
+    }`}>
+      {data.images.map((img: string, index: number) => (
+        <div class={`relative overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700 ${
+          data.images.length === 1 ? 'aspect-video' : 'aspect-square'
+        }`}>
+          <img 
+            src={img} 
+            alt={`说说图片 ${index + 1}`}
+            class="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+            loading="lazy"
+          />
+        </div>
+      ))}
+    </div>
+  )}
+
+
+</article>

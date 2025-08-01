@@ -1,0 +1,92 @@
+---
+export interface Props {
+  tags: string[];
+  categories: string[];
+  yearMonths: string[];
+}
+
+const { tags, categories, yearMonths } = Astro.props;
+---
+
+<div class="space-y-6">
+
+
+  <!-- 分类 -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 hover:shadow-md transition-all duration-300">
+    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+      </svg>
+      分类
+    </h3>
+    <ul class="space-y-2">
+      {categories.map(category => (
+        <li>
+          <a 
+            href={`/blog/category/${category.toLowerCase()}`}
+            class="flex items-center justify-between text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 px-2 py-1.5 rounded-md group"
+          >
+            <span>{category}</span>
+            <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+
+  <!-- 标签 -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 hover:shadow-md transition-all duration-300">
+    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+      </svg>
+      标签
+    </h3>
+    <div class="flex flex-wrap gap-2">
+      {tags.map(tag => (
+        <a 
+          href={`/blog/tag/${tag.toLowerCase()}`}
+          class="inline-block bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm px-3 py-1.5 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900 hover:text-purple-700 dark:hover:text-purple-300 hover:scale-105 transition-all duration-200 shadow-sm hover:shadow-md"
+        >
+          #{tag}
+        </a>
+      ))}
+    </div>
+  </div>
+
+  <!-- 归档 -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 hover:shadow-md transition-all duration-300">
+    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+      </svg>
+      归档
+    </h3>
+    <ul class="space-y-2">
+      {yearMonths.map(yearMonth => {
+        const [year, month] = yearMonth.split('-');
+        const monthNames = [
+          '一月', '二月', '三月', '四月', '五月', '六月',
+          '七月', '八月', '九月', '十月', '十一月', '十二月'
+        ];
+        const monthName = monthNames[parseInt(month) - 1];
+        
+        return (
+          <li>
+            <a 
+              href={`/blog/archive/${yearMonth}`}
+              class="flex items-center justify-between text-gray-600 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 px-2 py-1.5 rounded-md group"
+            >
+              <span>{year}年 {monthName}</span>
+              <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </div>
+</div>

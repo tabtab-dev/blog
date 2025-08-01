@@ -1,0 +1,157 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+// 获取说说内容
+const shuoShuoPosts = await getCollection('shuo-shuo');
+const publishedPosts = shuoShuoPosts.filter(post => !post.data.draft);
+
+// 按时间排序，最新的在前
+const sortedPosts = publishedPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+// 获取最新10条说说用于展示
+const latestShuoShuo = sortedPosts.slice(0, 10);
+
+// 统计信息 - 只保留总说说数和记录年份
+const totalShuoShuo = publishedPosts.length;
+const yearRange = [...new Set(publishedPosts.map(post => post.data.pubDate.getFullYear()))].sort((a, b) => b - a);
+
+// 日期格式化函数 - 显示相对时间
+function formatDate(date: Date): string {
+  // 使用已解析的北京时间计算相对时间
+  const now = new Date();
+  const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  
+  const diff = nowDate.getTime() - targetDate.getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  
+  if (days === 0) return '今天';
+  if (days === 1) return '昨天';
+  if (days < 7) return `${days}天前`;
+  if (days < 30) return `${Math.floor(days / 7)}周前`;
+  if (days < 365) return `${Math.floor(days / 30)}个月前`;
+  return `${Math.floor(days / 365)}年前`;
+}
+
+// 提取说说内容摘要
+function getContentSummary(content: string): string {
+  if (!content) return '分享生活点滴...';
+  
+  let text = content
+    .replace(/^---[\s\S]*?---/, '') // 移除frontmatter
+    .replace(/[#*`]/g, '') // 移除Markdown标记
+    .replace(/\n/g, ' ') // 换行变空格
+    .trim();
+    
+  if (text.length > 100) {
+    text = text.substring(0, 100) + '...';
+  }
+  
+  return text || '分享生活点滴...';
+}
+---
+
+<Layout title="生活说说 - 记录日常点滴" description="分享生活感悟、记录美好瞬间的个人说说专栏">
+  <div class=" mx-auto px-4 py-8">
+    <!-- 页面标题 -->
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">生活说说</h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">记录生活点滴，分享日常感悟</p>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12 max-w-lg mx-auto">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="text-2xl font-semibold text-gray-900 dark:text-white">{totalShuoShuo}</div>
+        <div class="text-sm text-gray-600 dark:text-gray-400">总说说</div>
+      </div>
+      
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="text-2xl font-semibold text-gray-900 dark:text-white">{yearRange.length}</div>
+        <div class="text-sm text-gray-600 dark:text-gray-400">记录年份</div>
+      </div>
+
+      <a href="/shuo-shuo/1" class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
+        <div class="text-lg font-medium text-gray-900 dark:text-white">查看全部</div>
+        <div class="text-sm text-gray-600 dark:text-gray-400">浏览历史</div>
+      </a>
+    </div>
+
+    <!-- 最新说说 -->
+    <div class="mx-auto">
+      <div class="flex items-center justify-between mb-8">
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
+          最新说说
+        </h2>
+        <a href="/shuo-shuo/1" class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200">
+          查看全部
+          <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+      
+      <!-- 优雅的说说列表 -->
+      <div class="space-y-3">
+        {latestShuoShuo.map((post) => (
+          <a href={`/shuo-shuo/${post.slug}`} class="block group">
+            <div class=" rounded-xl p-5 shadow-sm border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 hover:-translate-y-0.5">
+              <div class="flex items-start space-x-4">
+                <!-- 头像占位符 -->
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-full flex-shrink-0 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                  </svg>
+                </div>
+                
+                <!-- 内容区域 -->
+                <div class="flex-1 min-w-0">
+                  <div class="text-base text-gray-900 dark:text-gray-100 leading-relaxed mb-3 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
+                    {getContentSummary(post.body)}
+                  </div>
+                  
+                  <!-- 元信息 -->
+                  <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                    <time datetime={post.data.pubDate.toISOString()} class="font-medium">
+                      {formatDate(post.data.pubDate)}
+                    </time>
+                    
+                    <!-- 图片指示器 -->
+                    {post.data.images && post.data.images.length > 0 && (
+                      <div class="flex items-center">
+                        <svg class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span class="text-xs">{post.data.images.length}</span>
+                      </div>
+                    )}
+                    
+                    <!-- 分类标签 -->
+                    {post.data.category && (
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                        {post.data.category}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+
+      {latestShuoShuo.length === 0 && (
+        <div class="text-center py-12">
+          <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+            </svg>
+          </div>
+          <p class="text-lg text-gray-500 dark:text-gray-400">暂无说说</p>
+          <p class="text-sm text-gray-400 dark:text-gray-500 mt-2">开始记录你的第一个生活瞬间吧</p>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>

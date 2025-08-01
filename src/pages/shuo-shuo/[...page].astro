@@ -1,0 +1,210 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ShuoShuoCard from '../../components/ShuoShuoCard.astro';
+import { getCollection } from 'astro:content';
+
+// 分页配置
+const POSTS_PER_PAGE = 10;
+
+// 获取URL参数
+const { page } = Astro.params;
+const currentPage = Math.max(1, parseInt(page || '1', 10));
+
+// 获取所有说说内容
+const shuoShuoPosts = await getCollection('shuo-shuo');
+
+// 按发布时间排序，最新的在前
+const allPosts = shuoShuoPosts
+  .filter(post => !post.data.draft)
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+// 计算分页
+const totalPosts = allPosts.length;
+const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
+const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
+const endIndex = startIndex + POSTS_PER_PAGE;
+const currentPosts = allPosts.slice(startIndex, endIndex);
+
+// 获取所有年份（用于统计）
+const uniqueYears = new Set(allPosts.map(post => post.data.pubDate.getFullYear()));
+
+// 页面标题和描述
+const description = "分享日常心情、生活感悟和技术思考";
+let title = "说说 - 记录生活点滴";
+if (currentPage > 1) {
+  title = `说说 - 第${currentPage}页 - 记录生活点滴`;
+}
+
+// 静态生成所有页面
+export async function getStaticPaths() {
+  const POSTS_PER_PAGE = 10;
+  const shuoShuoPosts = await getCollection('shuo-shuo');
+  const allPosts = shuoShuoPosts.filter(post => !post.data.draft);
+  const totalPages = Math.ceil(allPosts.length / POSTS_PER_PAGE);
+  
+  return Array.from({ length: totalPages }, (_, i) => ({
+    params: { page: (i + 1).toString() }
+  }));
+}
+---
+
+<Layout title={title} description={description}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <!-- 粘性顶部导航 -->
+    <header class="sticky top-0 z-10 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center space-x-4 h-16">
+          <a href="/" class="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            首页
+          </a>
+          <span class="text-gray-400 dark:text-gray-600">/</span>
+          <span class="text-sm font-medium text-gray-900 dark:text-gray-100">说说</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- 页面标题区域 -->
+      <div class="mb-8 text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
+          <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+          </svg>
+        </div>
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">记录</h1>
+        <p class="text-lg text-gray-600 dark:text-gray-400">
+          共 {totalPosts} 条生活点滴
+        </p>
+      </div>
+
+      <!-- 统计卡片 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalPosts}</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">
+            总说说数
+          </div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{uniqueYears.size}</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">记录年份</div>
+        </div>
+      </div>
+
+      <div class="mx-auto">
+          <!-- 说说列表 -->
+          <div class="space-y-6">
+            {currentPosts.map(post => (
+              <ShuoShuoCard post={post} />
+            ))}
+          </div>
+
+          <!-- 无内容提示 -->
+          {currentPosts.length === 0 && (
+            <div class="text-center py-16">
+              <div class="mb-4">
+                <svg class="w-24 h-24 mx-auto text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+              </div>
+              <h3 class="text-xl font-medium text-gray-900 dark:text-white mb-2">
+                暂无说说
+              </h3>
+              <p class="text-gray-500 dark:text-gray-400">
+                开始记录你的第一条生活点滴吧
+              </p>
+            </div>
+          )}
+
+          <!-- 分页控件 -->
+          {totalPages > 1 && (
+            <nav class="flex items-center justify-between mt-12" aria-label="分页">
+              <div class="flex-1 flex justify-between sm:hidden">
+                {currentPage > 1 ? (
+                  <a 
+                    href={`/shuo-shuo/${currentPage - 1}`}
+                     class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                   >
+                     上一页
+                   </a>
+                ) : (
+                  <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 cursor-not-allowed">
+                    上一页
+                  </span>
+                )}
+                {currentPage < totalPages ? (
+                  <a 
+                    href={`/shuo-shuo/${currentPage + 1}`}
+                     class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                   >
+                     下一页
+                   </a>
+                ) : (
+                  <span class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 cursor-not-allowed">
+                    下一页
+                  </span>
+                )}
+              </div>
+              <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p class="text-sm text-gray-700 dark:text-gray-300">
+                    显示 <span class="font-medium">{startIndex + 1}</span> 到 <span class="font-medium">{Math.min(endIndex, totalPosts)}</span> 条，
+                    共 <span class="font-medium">{totalPosts}</span> 条说说
+                  </p>
+                </div>
+                <div>
+                  <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="分页">
+                    {currentPage > 1 && (
+                      <a 
+                         href={`/shuo-shuo/${currentPage - 1}`}
+                         class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+                       >
+                        <span class="sr-only">上一页</span>
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                      </a>
+                    )}
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      page === currentPage ? (
+                        <span 
+                          class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-sm font-medium text-blue-600 dark:text-blue-400"
+                          aria-current="page"
+                        >
+                          {page}
+                        </span>
+                      ) : (
+                        <a 
+                          href={`/shuo-shuo/${page}`}
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                         >
+                          {page}
+                        </a>
+                      )
+                    ))}
+                    
+                    {currentPage < totalPages && (
+                      <a 
+                         href={`/shuo-shuo/${currentPage + 1}`}
+                         class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+                       >
+                        <span class="sr-only">下一页</span>
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                      </a>
+                    )}
+                  </nav>
+                </div>
+              </div>
+            </nav>
+          )}
+        </div>
+      </div>
+    </main>
+  </div>
+</Layout>

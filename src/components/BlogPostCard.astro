@@ -1,0 +1,84 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+export interface Props {
+  post: CollectionEntry<'blog'>;
+  featured?: boolean;
+  bentoStyle?: 'default' | 'large' | 'wide' | 'tall';
+}
+
+const { post, featured = false, bentoStyle = 'default' } = Astro.props;
+const { title, description, pubDate, tags, category, heroImage, author } = post.data;
+
+const bentoClasses = {
+  default: '',
+  large: 'bento-item-large',
+  wide: 'bento-item-wide',
+  tall: 'bento-item-tall'
+}[bentoStyle];
+
+// 格式化日期
+const formattedDate = new Date(pubDate).toLocaleDateString('zh-CN', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+
+const shortDate = new Date(pubDate).toLocaleDateString('zh-CN', {
+  month: 'short',
+  day: 'numeric',
+});
+
+// 构建文章URL
+const postUrl = `/blog/${post.slug}`;
+---
+
+<article class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+  {heroImage && (
+    <div class="h-48">
+      <img 
+        src={heroImage} 
+        alt={title}
+        class="w-full h-full object-cover"
+        onerror="this.src='/images/placeholder.svg'"
+        loading="lazy"
+      />
+    </div>
+  )}
+  
+  <div class="p-4">
+    <div class="flex items-center justify-between mb-2">
+      {category && (
+        <a 
+          href={`/blog/category/${category.toLowerCase()}`}
+          class="text-xs font-medium text-blue-600 dark:text-blue-400"
+        >
+          {category}
+        </a>
+      )}
+      <time class="text-xs text-gray-500 dark:text-gray-400" datetime={pubDate.toISOString()}>
+        {shortDate}
+      </time>
+    </div>
+    
+    <h3 class="font-semibold text-base text-gray-900 dark:text-white mb-2">
+      <a href={postUrl} class="hover:text-blue-600 dark:hover:text-blue-400">
+        {title}
+      </a>
+    </h3>
+    
+    <p class="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
+      {description}
+    </p>
+    
+    {tags && tags.length > 0 && (
+      <div class="flex flex-wrap gap-1">
+        {tags.slice(0, 2).map(tag => (
+          <span class="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
+            #{tag}
+          </span>
+        ))}
+      </div>
+    )}
+  </div>
+</article>

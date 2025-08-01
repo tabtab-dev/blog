@@ -1,0 +1,147 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const posts = await getCollection('blog');
+const publishedPosts = posts.filter(post => !post.data.draft);
+
+// 获取所有分类和统计
+const categories = [...new Set(publishedPosts.map(post => post.data.category).filter(Boolean))];
+const categoriesWithStats = categories.map(category => {
+  const categoryPosts = publishedPosts.filter(post => post.data.category === category);
+  return {
+    name: category,
+    count: categoryPosts.length,
+    latestPost: categoryPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())[0],
+    tags: [...new Set(categoryPosts.flatMap(post => post.data.tags || []))]
+  };
+}).sort((a, b) => b.count - a.count);
+
+const totalPosts = publishedPosts.length;
+const totalCategories = categories.length;
+---
+
+<Layout title="文章分类 - TabTab" description="浏览所有文章分类">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <!-- 粘性顶部导航 -->
+    <header class="sticky top-0 z-10 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center space-x-4 h-16">
+          <a href="/blog" class="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            返回博客
+          </a>
+          <span class="text-gray-400 dark:text-gray-600">/</span>
+          <span class="text-sm font-medium text-gray-900 dark:text-gray-100">分类</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- 页面标题区域 -->
+      <div class="mb-8 text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full mb-4">
+          <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+          </svg>
+        </div>
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">文章分类</h1>
+        <p class="text-lg text-gray-600 dark:text-gray-400">
+          共 {totalCategories} 个分类，{totalPosts} 篇文章
+        </p>
+      </div>
+
+      <!-- 统计卡片 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div class="text-2xl font-bold text-green-600 dark:text-green-400">{totalCategories}</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">分类数量</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalPosts}</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">总文章数</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
+            {Math.round(publishedPosts.reduce((total, post) => total + (post.data.tags?.length || 0), 0) / totalCategories) || 0}
+          </div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">平均标签数</div>
+        </div>
+      </div>
+
+      <!-- 分类网格 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {categoriesWithStats.map((category) => (
+          <a
+            href={`/blog/category/${category.name.toLowerCase()}`}
+            class="group block p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:shadow-lg dark:hover:shadow-gray-900/50 hover:border-green-300 dark:hover:border-green-700 transition-all duration-200"
+          >
+            <div class="flex items-start justify-between mb-4">
+              <div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+                  {category.name}
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  {category.count} 篇文章
+                </p>
+              </div>
+              <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                </svg>
+              </div>
+            </div>
+            
+            {category.latestPost && (
+              <div class="space-y-2">
+                <div class="text-sm text-gray-600 dark:text-gray-400">最新文章:</div>
+                <div class="text-sm text-gray-900 dark:text-gray-100 font-medium line-clamp-2">
+                  {category.latestPost.data.title}
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                  {category.latestPost.data.pubDate.toLocaleDateString('zh-CN', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </div>
+              </div>
+            )}
+
+            {category.tags.length > 0 && (
+              <div class="mt-4">
+                <div class="flex flex-wrap gap-1">
+                  {category.tags.slice(0, 3).map(tag => (
+                    <span key={tag} class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded">
+                      #{tag}
+                    </span>
+                  ))}
+                  {category.tags.length > 3 && (
+                    <span class="text-xs text-gray-500 dark:text-gray-400">+{category.tags.length - 3}</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </a>
+        ))}
+      </div>
+
+      <!-- 底部导航 -->
+      <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
+        <div class="flex justify-center">
+          <a 
+            href="/blog" 
+            class="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            返回博客首页
+          </a>
+        </div>
+      </div>
+    </main>
+  </div>
+</Layout>

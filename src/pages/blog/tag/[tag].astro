@@ -1,0 +1,260 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import BlogPostCard from '../../../components/BlogPostCard.astro';
+import { getCollection } from 'astro:content';
+
+// 预生成所有标签页面
+export async function getStaticPaths() {
+  const allPosts = await getCollection('blog');
+  const publishedPosts = allPosts.filter(post => !post.data.draft);
+  const tags = [...new Set(publishedPosts.flatMap(post => post.data.tags || []))];
+  
+  return tags.map(tag => ({
+    params: { tag: tag.toLowerCase() },
+    props: { tag }
+  }));
+}
+
+// 获取标签参数
+const { tag } = Astro.props;
+
+// 获取分页参数
+const page = parseInt(Astro.url.searchParams.get('page') || '1');
+const postsPerPage = 12;
+
+// 获取所有博客文章
+const allPosts = await getCollection('blog');
+
+// 过滤掉草稿文章和包含指定标签的文章
+const publishedPosts = allPosts.filter(post => !post.data.draft);
+const tagPosts = publishedPosts.filter(post => 
+  post.data.tags?.some(t => t.toLowerCase() === tag?.toLowerCase())
+);
+
+// 按发布日期排序
+const sortedPosts = tagPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+// 计算分页
+const totalPosts = sortedPosts.length;
+const totalPages = Math.ceil(totalPosts / postsPerPage);
+const startIndex = (page - 1) * postsPerPage;
+const endIndex = startIndex + postsPerPage;
+const paginatedPosts = sortedPosts.slice(startIndex, endIndex);
+
+// 获取所有标签用于SEO
+const allTags = [...new Set(publishedPosts.flatMap(post => post.data.tags || []))];
+---
+
+<Layout title={`#${tag} - TabTab`} description={`浏览所有关于 "${tag}" 的文章`}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <!-- 粘性顶部导航 -->
+    <header class="sticky top-0 z-10 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center space-x-4 h-16">
+          <a href="/blog" class="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            返回博客
+          </a>
+          <span class="text-gray-400 dark:text-gray-600">/</span>
+          <a href="/blog/tags" class="text-sm font-medium text-gray-600 hover:text-purple-600 dark:text-gray-400 dark:hover:text-purple-400 transition-colors">标签</a>
+          <span class="text-gray-400 dark:text-gray-600">/</span>
+          <span class="text-sm font-medium text-purple-600 dark:text-purple-400">#{tag}</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- 页面标题区域 -->
+      <div class="mb-8 text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full mb-4">
+          <svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+          </svg>
+        </div>
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+          #{tag}
+        </h1>
+        <p class="text-lg text-gray-600 dark:text-gray-400">
+          共 {sortedPosts.length} 篇相关文章
+        </p>
+      </div>
+
+      <!-- 统计卡片 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{sortedPosts.length}</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">文章数量</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div class="text-2xl font-bold text-pink-600 dark:text-pink-400">
+            {[...new Set(sortedPosts.flatMap(post => post.data.category ? [post.data.category] : []))].length}
+          </div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">相关分类</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+            {[...new Set(sortedPosts.flatMap(post => post.data.tags || []))].length}
+          </div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">相关标签</div>
+        </div>
+      </div>
+
+      <!-- 文章列表 -->
+      {paginatedPosts.length > 0 ? (
+        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {paginatedPosts.map((post) => (
+            <BlogPostCard 
+              post={post} 
+              featured={false}
+              bentoStyle="default"
+            />
+          ))}
+        </div>
+      ) : (
+        <!-- 空状态 -->
+        <div class="text-center py-16">
+          <div class="mb-4">
+            <svg class="w-24 h-24 mx-auto text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+            </svg>
+          </div>
+          <h3 class="text-xl font-medium text-gray-900 dark:text-white mb-2">
+            暂无相关文章
+          </h3>
+          <p class="text-gray-500 dark:text-gray-400 mb-6">
+            目前还没有关于 "{tag}" 的文章
+          </p>
+          <a 
+            href="/blog" 
+            class="inline-flex items-center px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            返回博客首页
+          </a>
+        </div>
+      )}
+
+      <!-- 分页导航 -->
+      {totalPages > 1 && (
+        <nav class="flex items-center justify-between mt-12" aria-label="分页导航">
+          <div class="flex flex-1 justify-between sm:hidden">
+            {page > 1 ? (
+              <a
+                href={`?page=${page - 1}`}
+                class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                上一页
+              </a>
+            ) : (
+              <span class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-gray-100 border border-gray-300 rounded-md cursor-not-allowed">
+                上一页
+              </span>
+            )}
+            
+            {page < totalPages ? (
+              <a
+                href={`?page=${page + 1}`}
+                class="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                下一页
+              </a>
+            ) : (
+              <span class="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-gray-500 bg-gray-100 border border-gray-300 rounded-md cursor-not-allowed">
+                下一页
+              </span>
+            )}
+          </div>
+          
+          <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+            <div>
+              <p class="text-sm text-gray-700 dark:text-gray-300">
+                显示 <span class="font-medium">{startIndex + 1}</span> 到 <span class="font-medium">{Math.min(endIndex, totalPosts)}</span> 条，
+                共 <span class="font-medium">{totalPosts}</span> 条
+              </p>
+            </div>
+            
+            <div>
+              <nav class="relative z-0 inline-flex -space-x-px rounded-md shadow-sm" aria-label="分页">
+                {page > 1 ? (
+                  <a
+                    href={`?page=${page - 1}`}
+                    class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50"
+                  >
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    上一页
+                  </a>
+                ) : (
+                  <span class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-gray-100 border border-gray-300 rounded-l-md cursor-not-allowed">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    上一页
+                  </span>
+                )}
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                  pageNum === page ? (
+                    <span
+                      key={pageNum}
+                      class="relative z-10 inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-purple-600"
+                    >
+                      {pageNum}
+                    </span>
+                  ) : (
+                    <a
+                      key={pageNum}
+                      href={`?page=${pageNum}`}
+                      class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                    >
+                      {pageNum}
+                    </a>
+                  )
+                ))}
+                
+                {page < totalPages ? (
+                  <a
+                    href={`?page=${page + 1}`}
+                    class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50"
+                  >
+                    下一页
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </a>
+                ) : (
+                  <span class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-gray-100 border border-gray-300 rounded-r-md cursor-not-allowed">
+                    下一页
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </span>
+                )}
+              </nav>
+            </div>
+          </div>
+        </nav>
+      )}
+      
+      <!-- 底部导航 -->
+      <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
+        <div class="flex justify-center">
+          <a 
+            href="/blog" 
+            class="inline-flex items-center px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            返回博客首页
+          </a>
+        </div>
+      </div>
+    </main>
+  </div>
+</Layout>

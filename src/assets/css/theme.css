@@ -1,0 +1,413 @@
+/* 主题样式文件 - 包含所有主题相关的CSS变量和样式 */
+
+/* 基础主题变量定义 */
+:root {
+  /* 浅色主题 */
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f9fafb;
+  --color-bg-hover: #f3f4f6;
+  --color-text: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
+  --color-border: #e5e7eb;
+  --color-border-hover: #d1d5db;
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2563eb;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  
+  /* 护眼模式亮色主题 */
+  --eye-care-bg: #f7f3e9;
+  --eye-care-bg-secondary: #faf8f3;
+  --eye-care-bg-hover: #e8e0d5;
+  --eye-care-text: #5c4b37;
+  --eye-care-text-secondary: #8b7355;
+  --eye-care-border: #e8e0d5;
+  --eye-care-accent: #a0956b;
+  --eye-care-link: #8b7355;
+  --eye-care-link-hover: #5c4b37;
+}
+
+/* 暗黑主题变量 */
+.dark {
+  --color-bg: #111827;
+  --color-bg-secondary: #1f2937;
+  --color-bg-hover: #374151;
+  --color-text: #f9fafb;
+  --color-text-secondary: #d1d5db;
+  --color-text-muted: #9ca3af;
+  --color-border: #374151;
+  --color-border-hover: #4b5563;
+  --color-accent: #60a5fa;
+  --color-accent-hover: #3b82f6;
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-error: #f87171;
+  
+  /* 护眼模式暗色主题 */
+  --eye-care-bg: #1e1e1e;
+  --eye-care-bg-secondary: #2d2d2d;
+  --eye-care-bg-hover: #3d3d3d;
+  --eye-care-text: #d4c5b0;
+  --eye-care-text-secondary: #a0956b;
+  --eye-care-border: #404040;
+  --eye-care-accent: #a0956b;
+  --eye-care-link: #a0956b;
+  --eye-care-link-hover: #d4c5b0;
+}
+
+/* 主题切换动画 */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* 浅色主题样式 */
+.light-theme {
+  @apply bg-[var(--color-bg)] text-[var(--color-text)];
+}
+
+.light-theme :is(.bg-gray-50, .bg-slate-50, .bg-zinc-50) {
+  @apply bg-[var(--color-bg-secondary)];
+}
+
+.light-theme :is(.bg-white, .bg-gray-100) {
+  @apply bg-[var(--color-bg-secondary)];
+}
+
+.light-theme :is(.text-gray-900, .text-slate-900, .text-zinc-900) {
+  @apply text-[var(--color-text)];
+}
+
+.light-theme :is(.text-gray-700, .text-gray-600) {
+  @apply text-[var(--color-text-secondary)];
+}
+
+.light-theme :is(.border-gray-200, .border-gray-300) {
+  @apply border-[var(--color-border)];
+}
+
+/* 护眼模式样式 */
+.eye-care {
+  @apply bg-[var(--eye-care-bg)] text-[var(--eye-care-text)];
+}
+
+.eye-care :is(.bg-gray-50, .bg-slate-50, .bg-zinc-50) {
+  @apply bg-[var(--eye-care-bg-secondary)];
+}
+
+.eye-care :is(.bg-white, .bg-gray-100) {
+  @apply bg-[var(--eye-care-bg-secondary)];
+}
+
+.eye-care :is(.bg-gray-200, .bg-slate-200) {
+  @apply bg-[var(--eye-care-bg-hover)];
+}
+
+.eye-care :is(.text-gray-900, .text-slate-900, .text-zinc-900) {
+  @apply text-[var(--eye-care-text)];
+}
+
+.eye-care :is(.text-gray-700, .text-gray-600, .text-slate-700) {
+  @apply text-[var(--eye-care-text-secondary)];
+}
+
+.eye-care :is(.text-gray-500, .text-slate-500) {
+  @apply text-[var(--eye-care-text-secondary)];
+}
+
+.eye-care :is(.border-gray-200, .border-slate-200, .border-gray-300) {
+  @apply border-[var(--eye-care-border)];
+}
+
+.eye-care :is(.hover\:bg-gray-100, .hover\:bg-slate-100):hover {
+  @apply bg-[var(--eye-care-bg-hover)];
+}
+
+.eye-care :is(.hover\:text-gray-900, .hover\:text-slate-900):hover {
+  @apply text-[var(--eye-care-text)];
+}
+
+/* 护眼模式下的链接样式 */
+.eye-care a:not(.theme-button) {
+  @apply text-[var(--eye-care-link)];
+}
+
+.eye-care a:not(.theme-button):hover {
+  @apply text-[var(--eye-care-link-hover)];
+}
+
+/* 护眼模式下的按钮样式 */
+.eye-care :is(.btn, button, [role="button"]):not(.theme-button) {
+  @apply bg-[var(--eye-care-accent)] text-[var(--eye-care-bg)];
+}
+
+.eye-care :is(.btn, button, [role="button"]):not(.theme-button):hover {
+  @apply bg-[var(--eye-care-text)];
+}
+
+/* 护眼模式下的Tailwind Typography集成 */
+.eye-care {
+  /* 基础排版变量 */
+  --tw-prose-body: var(--eye-care-text);
+  --tw-prose-headings: var(--eye-care-text);
+  --tw-prose-lead: var(--eye-care-text-secondary);
+  --tw-prose-links: var(--eye-care-link);
+  --tw-prose-bold: var(--eye-care-text);
+  --tw-prose-counters: var(--eye-care-text-secondary);
+  --tw-prose-bullets: var(--eye-care-text-secondary);
+  --tw-prose-hr: var(--eye-care-border);
+  --tw-prose-quotes: var(--eye-care-text);
+  --tw-prose-quote-borders: var(--eye-care-border);
+  --tw-prose-captions: var(--eye-care-text-secondary);
+  --tw-prose-code: var(--eye-care-text);
+  --tw-prose-pre-code: var(--eye-care-text);
+  --tw-prose-pre-bg: var(--eye-care-bg-secondary);
+  --tw-prose-th-borders: var(--eye-care-border);
+  --tw-prose-td-borders: var(--eye-care-border);
+  
+  /* 代码相关变量 */
+  --tw-prose-kbd: var(--eye-care-accent);
+  --tw-prose-kbd-shadows: 0 0 0 1px var(--eye-care-border);
+  --tw-prose-mark-bg: rgba(160, 149, 107, 0.15);
+  --tw-prose-mark-text: var(--eye-care-text);
+  
+  /* 语法高亮 - 护眼亮色模式 */
+  --tw-prose-comment: #8b7355;
+  --tw-prose-string: #a0956b;
+  --tw-prose-keyword: #5c4b37;
+  --tw-prose-function: #5c4b37;
+  --tw-prose-variable: var(--eye-care-accent);
+  --tw-prose-number: #a0956b;
+  --tw-prose-boolean: #5c4b37;
+  --tw-prose-constant: var(--eye-care-accent);
+  --tw-prose-punctuation: var(--eye-care-text-secondary);
+  --tw-prose-operator: var(--eye-care-text-secondary);
+  --tw-prose-property: #5c4b37;
+  --tw-prose-selector: var(--eye-care-accent);
+  --tw-prose-tag: #5c4b37;
+  --tw-prose-attr-name: var(--eye-care-accent);
+  --tw-prose-attr-value: #a0956b;
+  --tw-prose-deleted: #8b7355;
+  --tw-prose-inserted: var(--eye-care-accent);
+  --tw-prose-namespace: var(--eye-care-text-secondary);
+  --tw-prose-class-name: #5c4b37;
+  --tw-prose-builtin: var(--eye-care-accent);
+  --tw-prose-char: #5c4b37;
+  --tw-prose-symbol: var(--eye-care-accent);
+  --tw-prose-regex: #a0956b;
+}
+
+/* 护眼模式下Typography内容的直接样式覆盖 */
+.eye-care :where(.prose):not(:where([class~="not-prose"] *)) {
+  color: var(--eye-care-text);
+}
+
+.eye-care :where(.prose *):not(:where([class~="not-prose"] *)) {
+  border-color: var(--eye-care-border);
+  color: var(--eye-care-text);
+}
+
+.eye-care :where(.prose h1):not(:where([class~="not-prose"] *)),
+.eye-care :where(.prose h2):not(:where([class~="not-prose"] *)),
+.eye-care :where(.prose h3):not(:where([class~="not-prose"] *)),
+.eye-care :where(.prose h4):not(:where([class~="not-prose"] *)) {
+  color: var(--eye-care-text);
+}
+
+.eye-care :where(.prose p):not(:where([class~="not-prose"] *)) {
+  color: var(--eye-care-text);
+}
+
+.eye-care :where(.prose li):not(:where([class~="not-prose"] *)) {
+  color: var(--eye-care-text);
+}
+
+.eye-care :where(.prose strong):not(:where([class~="not-prose"] *)) {
+  color: var(--eye-care-text);
+}
+
+.eye-care :where(.prose blockquote):not(:where([class~="not-prose"] *)) {
+  border-left-color: var(--eye-care-border);
+  color: var(--eye-care-text-secondary);
+}
+
+.eye-care :where(.prose figcaption):not(:where([class~="not-prose"] *)) {
+  color: var(--eye-care-text-secondary);
+}
+
+/* 护眼模式暗色主题的代码高亮 */
+.eye-care.dark {
+  /* 语法高亮 - 护眼暗色模式 */
+  --tw-prose-comment: #a0956b;
+  --tw-prose-string: #d4c5b0;
+  --tw-prose-keyword: #d4c5b0;
+  --tw-prose-function: #d4c5b0;
+  --tw-prose-variable: var(--eye-care-accent);
+  --tw-prose-number: #d4c5b0;
+  --tw-prose-boolean: #d4c5b0;
+  --tw-prose-constant: var(--eye-care-accent);
+  --tw-prose-punctuation: var(--eye-care-text-secondary);
+  --tw-prose-operator: var(--eye-care-text-secondary);
+  --tw-prose-property: #d4c5b0;
+  --tw-prose-selector: var(--eye-care-accent);
+  --tw-prose-tag: #d4c5b0;
+  --tw-prose-attr-name: var(--eye-care-accent);
+  --tw-prose-attr-value: #d4c5b0;
+  --tw-prose-deleted: #a0956b;
+  --tw-prose-inserted: var(--eye-care-accent);
+  --tw-prose-namespace: var(--eye-care-text-secondary);
+  --tw-prose-class-name: #d4c5b0;
+  --tw-prose-builtin: var(--eye-care-accent);
+  --tw-prose-char: #d4c5b0;
+  --tw-prose-symbol: var(--eye-care-accent);
+  --tw-prose-regex: #d4c5b0;
+}
+
+/* 暗黑护眼模式下Typography内容的直接样式覆盖 */
+.eye-care.dark :where(.prose):not(:where([class~="not-prose"] *)) {
+  color: var(--eye-care-text);
+}
+
+.eye-care.dark :where(.prose *):not(:where([class~="not-prose"] *)) {
+  border-color: var(--eye-care-border);
+  color: var(--eye-care-text);
+}
+
+.eye-care.dark :where(.prose h1):not(:where([class~="not-prose"] *)),
+.eye-care.dark :where(.prose h2):not(:where([class~="not-prose"] *)),
+.eye-care.dark :where(.prose h3):not(:where([class~="not-prose"] *)),
+.eye-care.dark :where(.prose h4):not(:where([class~="not-prose"] *)) {
+  color: var(--eye-care-text);
+}
+
+.eye-care.dark :where(.prose p):not(:where([class~="not-prose"] *)) {
+  color: var(--eye-care-text);
+}
+
+.eye-care.dark :where(.prose li):not(:where([class~="not-prose"] *)) {
+  color: var(--eye-care-text);
+}
+
+.eye-care.dark :where(.prose strong):not(:where([class~="not-prose"] *)) {
+  color: var(--eye-care-text);
+}
+
+.eye-care.dark :where(.prose blockquote):not(:where([class~="not-prose"] *)) {
+  border-left-color: var(--eye-care-border);
+  color: var(--eye-care-text-secondary);
+}
+
+.eye-care.dark :where(.prose figcaption):not(:where([class~="not-prose"] *)) {
+  color: var(--eye-care-text-secondary);
+}
+
+/* 护眼模式下的代码块样式 - 优化与Tailwind Typography的兼容性 */
+.eye-care :where(pre):not(:where([class~="not-prose"] *)) {
+  background-color: var(--eye-care-bg-secondary);
+  color: var(--eye-care-text);
+  border: 1px solid var(--eye-care-border);
+  border-radius: 0.375rem;
+  overflow-x: auto;
+}
+
+.eye-care :where(code):not(:where([class~="not-prose"] *)) {
+  color: var(--eye-care-text);
+  font-weight: 600;
+  font-size: 0.875em;
+}
+
+.eye-care :where(code):not(:where([class~="not-prose"] *)):before {
+  content: none;
+}
+
+.eye-care :where(code):not(:where([class~="not-prose"] *)):after {
+  content: none;
+}
+
+.eye-care :where(pre code):not(:where([class~="not-prose"] *)) {
+  background-color: transparent;
+  border-width: 0;
+  border-radius: 0;
+  padding: 0;
+  font-weight: 400;
+  color: inherit;
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
+}
+
+.eye-care :where(pre code):not(:where([class~="not-prose"] *)):before {
+  content: none;
+}
+
+.eye-care :where(pre code):not(:where([class~="not-prose"] *)):after {
+  content: none;
+}
+
+/* 行内代码样式 */
+.eye-care :not(pre) > code {
+  background-color: var(--eye-care-bg-secondary);
+  color: var(--eye-care-text);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  font-weight: 600;
+}
+
+/* 护眼模式下的卡片样式 */
+.eye-care :is(.card, .shadow) {
+  @apply bg-[var(--eye-care-bg-secondary)] border-[var(--eye-care-border)];
+}
+
+/* 护眼模式下的输入框样式 */
+.eye-care :is(input, textarea, select) {
+  @apply bg-[var(--eye-care-bg-secondary)] text-[var(--eye-care-text)] border-[var(--eye-care-border)];
+}
+
+.eye-care :is(input, textarea, select):focus {
+  @apply border-[var(--eye-care-accent)] ring-[var(--eye-care-accent)];
+}
+
+/* 主题切换按钮样式 */
+.theme-button {
+  @apply px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200;
+}
+
+.theme-button.active {
+  @apply bg-gray-200 text-gray-900;
+}
+
+.dark .theme-button.active {
+  @apply bg-gray-700 text-gray-100;
+}
+
+.theme-button:not(.active) {
+  @apply text-gray-600 hover:bg-gray-100;
+}
+
+.dark .theme-button:not(.active) {
+  @apply text-gray-300 hover:bg-gray-800;
+}
+
+/* 护眼模式下的主题切换按钮样式 */
+.eye-care .theme-button.active {
+  @apply bg-[var(--eye-care-bg-hover)] text-[var(--eye-care-text)];
+}
+
+.eye-care .theme-button:not(.active) {
+  @apply text-[var(--eye-care-text-secondary)] hover:bg-[var(--eye-care-bg-hover)];
+}
+
+/* 主题切换工具类 */
+.theme-transition {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* 打印样式 */
+@media print {
+  .theme-button,
+  .mobile-menu-button {
+    display: none !important;
+  }
+}

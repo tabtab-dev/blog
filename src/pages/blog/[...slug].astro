@@ -1,0 +1,337 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection, render } from 'astro:content';
+
+// 获取文章
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts.filter(post => !post.data.draft).map(post => ({
+    params: { slug: post.slug },
+    props: post,
+  }));
+}
+
+const post = Astro.props;
+const { Content } = await render(post);
+
+// 获取上一篇和下一篇文章
+const allPosts = await getCollection('blog');
+const publishedPosts = allPosts.filter(p => !p.data.draft);
+
+// 按发布时间降序排序（最新的在前面）
+const allPostsSorted = publishedPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+const currentIndex = allPostsSorted.findIndex(p => p.slug === post.slug);
+
+// 上一篇是时间更早的文章（索引更大），下一篇是时间更新的文章（索引更小）
+const prevPost = currentIndex < allPostsSorted.length - 1 ? allPostsSorted[currentIndex + 1] : null;
+const nextPost = currentIndex > 0 ? allPostsSorted[currentIndex - 1] : null;
+
+// 格式化阅读时间
+const readingTime = Math.ceil(post.body.split(' ').length / 200);
+
+// 格式化日期
+  const formattedDate = post.data.pubDate.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const updatedDate = post.data.updatedDate && post.data.updatedDate.getTime() !== post.data.pubDate.getTime()
+    ? post.data.updatedDate.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : null;
+---
+
+<Layout title={`${post.data.title} - TabTab`} description={post.data.description}>
+  <div class="min-h-screen bg-white dark:bg-gray-950">
+    <!-- 顶部导航 -->
+    <header class="sticky top-0 z-10 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
+      <div class="max-w-none mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <a href="/blog" class="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            返回博客
+          </a>
+          
+          <div class="flex items-center space-x-4">
+            <button id="copy-link" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors" title="复制链接">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-none mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+      <!-- 文章头部 -->
+  <header class="mb-16">
+    <!-- Hero Image 背景区域 -->
+    {post.data.heroImage && (
+      <div class="relative w-full h-96 md:h-[500px] lg:h-[600px] rounded-2xl overflow-hidden mb-12">
+        <div class="hero-image-container relative w-full h-full">
+          {Array.isArray(post.data.heroImage) ? (
+            <!-- 多张图片时只取第一张 -->
+            <div 
+              class="absolute inset-0 w-full h-full bg-cover bg-center"
+              style={`background-image: url('${post.data.heroImage[0]}')`}
+            >
+              <!-- 更强的灰色蒙版，解决浅色图片突兀问题 -->
+              <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-black/30"></div>
+            </div>
+          ) : (
+            <!-- 单张图片 -->
+            <div 
+              class="absolute inset-0 w-full h-full bg-cover bg-center"
+              style={`background-image: url('${post.data.heroImage}')`}
+            >
+              <!-- 更强的灰色蒙版，解决浅色图片突兀问题 -->
+              <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-black/30"></div>
+            </div>
+          )}
+        </div>
+        
+        <!-- 标题和内容覆盖层 -->
+        <div class="absolute inset-0 flex items-center justify-center px-4">
+          <div class="text-center text-white max-w-4xl">
+            {post.data.category && (
+              <a href={`/blog/category/${post.data.category.toLowerCase()}`} 
+                 class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-all duration-200 mb-6">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+                {post.data.category}
+              </a>
+            )}
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight mb-6">
+              {post.data.title}
+            </h1>
+            {post.data.description && (
+              <p class="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed">
+                {post.data.description}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
+    
+    <!-- 无heroImage时的标题区域 -->
+    {!post.data.heroImage && (
+      <div class="text-center">
+        <div class="mb-8">
+          {post.data.category && (
+            <a href={`/blog/category/${post.data.category.toLowerCase()}`} 
+               class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/30 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all duration-200 hover:scale-105">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+              {post.data.category}
+            </a>
+          )}
+        </div>
+        
+        <div class="relative">
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 dark:text-gray-100 leading-tight">
+            {post.data.title}
+          </h1>
+        </div>
+      </div>
+    )}
+        
+        <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-6 text-sm text-gray-500 dark:text-gray-400">
+          <div class="flex items-center">
+            <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <time datetime={post.data.pubDate.toISOString()} class="font-medium">
+              {formattedDate}
+            </time>
+          </div>
+          
+          <div class="hidden sm:block w-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+          
+          <div class="flex items-center">
+            <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="font-medium">{readingTime} 分钟阅读</span>
+          </div>
+          
+          {updatedDate && (
+            <>
+              <div class="hidden sm:block w-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+              <div class="flex items-center">
+                <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span class="font-medium">更新于 {updatedDate}</span>
+              </div>
+            </>
+          )}
+        </div>
+
+        {post.data.tags && post.data.tags.length > 0 && (
+          <div class="mt-8 flex flex-wrap justify-center gap-2">
+            {post.data.tags.map((tag: string) => (
+              <a
+                key={tag}
+                href={`/blog/tag/${tag.toLowerCase()}`}
+                class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200 hover:scale-105"
+              >
+                #{tag}
+              </a>
+            ))}
+          </div>
+        )}
+      </header>
+
+      <!-- 文章内容 -->
+      <article class="prose   dark:prose-invert max-w-none mb-20">
+        <Content />
+      </article>
+
+      <!-- 文章导航 -->
+      <nav class="border-t border-gray-200 dark:border-gray-800 pt-12">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8 text-center">继续阅读</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {prevPost ? (
+            <a href={`/blog/${prevPost.slug}`} 
+               class="group block p-6 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
+              <div class="flex items-center mb-3">
+                <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-2 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">上一篇</span>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 mb-2">
+                {prevPost.data.title}
+              </h3>
+              {prevPost.data.description && (
+                <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
+                  {prevPost.data.description}
+                </p>
+              )}
+              <div class="flex items-center text-xs text-gray-500 dark:text-gray-500">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {prevPost.data.pubDate.toLocaleDateString('zh-CN', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric'
+                })}
+              </div>
+            </a>
+          ) : (
+            <div class="p-6 rounded-lg border border-dashed border-gray-200 dark:border-gray-800">
+              <div class="text-center py-8">
+                <p class="text-sm text-gray-400 dark:text-gray-600">没有上一篇了</p>
+              </div>
+            </div>
+          )}
+          
+          {nextPost ? (
+            <a href={`/blog/${nextPost.slug}`} 
+               class="group block p-6 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors md:text-right">
+              <div class="flex items-center justify-end mb-3">
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">下一篇</span>
+                <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 ml-2 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors line-clamp-2 mb-2">
+                {nextPost.data.title}
+              </h3>
+              {nextPost.data.description && (
+                <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
+                  {nextPost.data.description}
+                </p>
+              )}
+              <div class="flex items-center justify-end text-xs text-gray-500 dark:text-gray-500">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {nextPost.data.pubDate.toLocaleDateString('zh-CN', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric'
+                })}
+              </div>
+            </a>
+          ) : (
+            <div class="p-6 rounded-lg border border-dashed border-gray-200 dark:border-gray-800">
+              <div class="text-center py-8">
+                <p class="text-sm text-gray-400 dark:text-gray-600">没有下一篇了</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </nav>
+    </main>
+
+    <!-- 复制链接功能 -->
+    <script>
+      const copyBtn = document.getElementById('copy-link');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(window.location.href);
+            copyBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
+            setTimeout(() => {
+              copyBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>';
+            }, 2000);
+          } catch (err) {
+            console.error('Failed to copy link:', err);
+          }
+        });
+      }
+    </script>
+  </div>
+</Layout>
+
+<style>
+/* 自定义滚动条样式 */
+.prose pre::-webkit-scrollbar {
+  height: 0.5rem;
+}
+
+.prose pre::-webkit-scrollbar-track {
+  background: #1e293b;
+  border-radius: 0.25rem;
+}
+
+.prose pre::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 0.25rem;
+}
+
+.prose pre::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* 代码块行号样式 */
+.prose pre code {
+  counter-reset: line;
+}
+
+.prose pre code > span {
+  counter-increment: line;
+}
+
+.prose pre code > span::before {
+  content: counter(line);
+  display: inline-block;
+  width: 1.5em;
+  margin-right: 1em;
+  text-align: right;
+  color: #64748b;
+  user-select: none;
+}
+</style>

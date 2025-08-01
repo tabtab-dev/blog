@@ -1,0 +1,9 @@
+@import "tailwindcss";
+@import "./theme.css";
+@plugin '@tailwindcss/typography';
+
+/* 暗黑主题 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* 护眼模式主题 */
+@custom-variant eye-care (&:where(.eye-care, .eye-care *));

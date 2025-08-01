@@ -1,0 +1,172 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import BlogPostCard from '../../../components/BlogPostCard.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  const publishedPosts = posts.filter(post => !post.data.draft);
+  
+  // 按年月分组
+  const postsByYearMonth = publishedPosts.reduce((acc, post) => {
+    const year = post.data.pubDate.getFullYear();
+    const month = String(post.data.pubDate.getMonth() + 1).padStart(2, '0');
+    const key = `${year}-${month}`;
+    
+    if (!acc[key]) {
+      acc[key] = [];
+    }
+    acc[key].push(post);
+    return acc;
+  }, {} as Record<string, typeof publishedPosts>);
+
+  // 生成所有归档页面的路径
+  return Object.keys(postsByYearMonth).map(archive => ({
+    params: { archive },
+    props: {
+      posts: postsByYearMonth[archive].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()),
+      archive,
+      allArchives: Object.keys(postsByYearMonth).sort().reverse()
+    }
+  }));
+}
+
+const { posts, archive, allArchives } = Astro.props;
+const [year, month] = archive.split('-');
+const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+const monthName = monthNames[parseInt(month) - 1];
+
+// 获取当前归档的索引，用于导航
+const currentIndex = allArchives.indexOf(archive);
+const prevArchive = currentIndex < allArchives.length - 1 ? allArchives[currentIndex + 1] : null;
+const nextArchive = currentIndex > 0 ? allArchives[currentIndex - 1] : null;
+
+// 格式化归档名称
+function formatArchiveName(archiveKey: string) {
+  const [y, m] = archiveKey.split('-');
+  return `${y}年${monthNames[parseInt(m) - 1]}`;
+}
+---
+
+<Layout title={`${year}年${monthName}归档 - TabTab`}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <!-- 顶部导航 -->
+    <header class="sticky top-0 z-10 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center space-x-4">
+            <a href="/blog" class="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+              返回博客
+            </a>
+            <span class="text-gray-400 dark:text-gray-600">/</span>
+            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{year}年{monthName}</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- 页面标题 -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          {year}年{monthName}
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400">
+          共 {posts.length} 篇文章
+        </p>
+      </div>
+
+      <!-- 月份导航 -->
+      <nav class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">月份导航</h2>
+          <div class="flex space-x-2">
+            {prevArchive && (
+              <a 
+                href={`/blog/archive/${prevArchive}`}
+                class="inline-flex items-center px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+              >
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                {formatArchiveName(prevArchive)}
+              </a>
+            )}
+            {nextArchive && (
+              <a 
+                href={`/blog/archive/${nextArchive}`}
+                class="inline-flex items-center px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+              >
+                {formatArchiveName(nextArchive)}
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+            )}
+          </div>
+        </div>
+
+        <!-- 月份选择器 -->
+        <div class="flex flex-wrap gap-2">
+          {allArchives.map(archiveKey => {
+            const [y, m] = archiveKey.split('-');
+            const isActive = archiveKey === archive;
+            return (
+              <a
+                href={`/blog/archive/${archiveKey}`}
+                class={`px-3 py-1.5 text-sm rounded-full transition-colors ${
+                  isActive
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                {formatArchiveName(archiveKey)}
+              </a>
+            );
+          })}
+        </div>
+      </nav>
+
+      <!-- 文章列表 -->
+      <div class="space-y-6">
+        {posts.map((post) => (
+          <BlogPostCard 
+            post={post} 
+            bentoStyle="simple"
+          />
+        ))}
+
+        {posts.length === 0 && (
+          <div class="text-center py-12">
+            <svg class="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            <p class="text-gray-500 dark:text-gray-400 text-lg">本月暂无文章</p>
+          </div>
+        )}
+      </div>
+
+      <!-- 底部导航 -->
+      <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
+        <div class="flex justify-between items-center">
+          <a 
+            href="/blog"
+            class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            返回博客首页
+          </a>
+
+          <div class="text-sm text-gray-500 dark:text-gray-400">
+            共 {allArchives.length} 个月份
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</Layout>

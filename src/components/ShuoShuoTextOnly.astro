@@ -1,0 +1,74 @@
+---
+export interface Props {
+  post: any;
+}
+
+const { post } = Astro.props;
+
+// 日期格式化函数 - 显示相对时间
+function formatDate(date: Date): string {
+  // 使用已解析的北京时间计算相对时间
+  const now = new Date();
+  const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  
+  const diff = nowDate.getTime() - targetDate.getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  
+  if (days === 0) return '今天';
+  if (days === 1) return '昨天';
+  if (days < 7) return `${days}天前`;
+  if (days < 30) return `${Math.floor(days / 7)}周前`;
+  if (days < 365) return `${Math.floor(days / 30)}个月前`;
+  return `${Math.floor(days / 365)}年前`;
+}
+
+// 提取说说内容并限制字数
+let content = "";
+if (post.body) {
+  content = post.body
+    .replace(/^---[\s\S]*?---/, "") // 移除frontmatter
+    .replace(/[#*`]/g, "") // 移除Markdown标记
+    .replace(/\n/g, " ") // 换行变空格
+    .trim();
+}
+
+// 限制在30字内，超出用省略号
+let displayText = content || "分享生活点滴...";
+if (displayText.length > 30) {
+  displayText = displayText.substring(0, 30) + "...";
+}
+---
+
+<!-- 简洁文字说说展示 -->
+<a
+  href={`/shuo-shuo/${post.slug}`}
+  class="block group p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200"
+>
+  <div class="flex items-start space-x-3">
+    <svg
+      class="w-5 h-6 text-gray-400"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+      ></path>
+    </svg>
+
+    <div class="flex-1 min-w-0">
+      <div class="text-sm text-gray-900 dark:text-gray-100 leading-relaxed">
+        {displayText}
+      </div>
+      <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <time datetime={post.data.pubDate.toISOString()}
+          >{formatDate(post.data.pubDate)}</time
+        >
+      </div>
+    </div>
+  </div>
+</a>

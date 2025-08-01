@@ -1,0 +1,143 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const posts = await getCollection('blog');
+const publishedPosts = posts.filter(post => !post.data.draft);
+
+// 按年月分组
+const postsByYearMonth = publishedPosts.reduce((acc, post) => {
+  const year = post.data.pubDate.getFullYear();
+  const month = String(post.data.pubDate.getMonth() + 1).padStart(2, '0');
+  const key = `${year}-${month}`;
+  
+  if (!acc[key]) {
+    acc[key] = {
+      posts: [],
+      year,
+      month: parseInt(month),
+      count: 0
+    };
+  }
+  acc[key].posts.push(post);
+  acc[key].count += 1;
+  return acc;
+}, {} as Record<string, { posts: typeof publishedPosts, year: number, month: number, count: number }>);
+
+// 按年份分组
+const archivesByYear = Object.entries(postsByYearMonth)
+  .reduce((acc, [key, data]) => {
+    const year = data.year;
+    if (!acc[year]) {
+      acc[year] = [];
+    }
+    acc[year].push({
+      ...data,
+      key,
+      monthName: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'][data.month - 1]
+    });
+    return acc;
+  }, {} as Record<number, Array<{ key: string, year: number, month: number, monthName: string, count: number, posts: typeof publishedPosts }>>);
+
+// 按年份降序排序
+const sortedYears = Object.keys(archivesByYear).map(Number).sort((a, b) => b - a);
+
+const totalPosts = publishedPosts.length;
+const totalMonths = Object.keys(postsByYearMonth).length;
+---
+
+<Layout title="文章归档 - TabTab">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <!-- 顶部导航 -->
+    <header class="sticky top-0 z-10 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center space-x-4 h-16">
+          <a href="/blog" class="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            返回博客
+          </a>
+          <span class="text-gray-400 dark:text-gray-600">/</span>
+          <span class="text-sm font-medium text-gray-900 dark:text-gray-100">文章归档</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- 页面标题 -->
+      <div class="mb-8 text-center">
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">文章归档</h1>
+        <p class="text-lg text-gray-600 dark:text-gray-400">
+          共 {totalPosts} 篇文章，跨越 {totalMonths} 个月份
+        </p>
+      </div>
+
+      <!-- 统计卡片 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalPosts}</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">总文章数</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div class="text-2xl font-bold text-green-600 dark:text-green-400">{totalMonths}</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">活跃月份</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{sortedYears.length}</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">活跃年份</div>
+        </div>
+      </div>
+
+      <!-- 按年份分组显示 -->
+      <div class="space-y-8">
+        {sortedYears.map(year => (
+          <section key={year}>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+              <span class="text-blue-600 dark:text-blue-400 mr-2">{year}</span>
+              <span class="text-lg text-gray-500 dark:text-gray-400">年</span>
+            </h2>
+            
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              {archivesByYear[year].map(archive => (
+                <a
+                  href={`/blog/archive/${archive.key}`}
+                  class="group block p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md dark:hover:shadow-gray-900/50 hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-200"
+                >
+                  <div class="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    {archive.monthName}
+                  </div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400">
+                    {archive.count} 篇
+                  </div>
+                  
+                  <!-- 最近文章预览 -->
+                  {archive.posts.slice(0, 2).map(post => (
+                    <div class="mt-2 text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
+                      {post.data.title}
+                    </div>
+                  ))}
+                </a>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <!-- 底部导航 -->
+      <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
+        <div class="flex justify-center">
+          <a 
+            href="/blog"
+            class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            返回博客首页
+          </a>
+        </div>
+      </div>
+    </main>
+  </div>
+</Layout>
